@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # coding=utf-8
 
 import rospy
@@ -54,7 +54,7 @@ class GameStateDecoder:
         }
     def decode(self,rawData, refereeMsg, playerNumber):
         #first part
-        protocolFirst8Bytes, protocolLast8Bytes, refereeMsg.packet_number, refereeMsg.players_per_team, gameType, state, refereeMsg.first_half, refereeMsg.kick_off_team, s_state, refereeMsg.team_p, submode = struct.unpack('11B',rawData[4:15])
+        protocolFirst8Bytes, protocolLast8Bytes, refereeMsg.packet_number, refereeMsg.players_per_team, gameType, state, refereeMsg.first_half, refereeMsg.kick_off_team, s_state, refereeMsg.teamPerformingSubMode, submode = struct.unpack('11B',rawData[4:15])
         #second part
         refereeMsg.drop_in_team, dropInTimeFirst8Bytes, dropInTimeLast8Bytes, timeFirs8Bytes, timeLast8Bytes, secondaryTimeFirst8Bytes, secondaryTimeLast8Bytes = struct.unpack('7B',rawData[17:24])
         
@@ -67,9 +67,9 @@ class GameStateDecoder:
             playerinfo = rawData[622+playerNumber*6:628+playerNumber*6]
 
         #team info 356 to 361 for b team
-        refereeMsg.team_n, refereeMsg.team_c, refereeMsg.score, refereeMsg.p_shoot, refereeMsg.coach_s = struct.unpack('5B',teaminfo)
+        refereeMsg.teamNumber, refereeMsg.teamColor, refereeMsg.score, refereeMsg.penaltyShotCounter, refereeMsg.coachSequence = struct.unpack('5B',teaminfo)
         #player info 622+n*6:628 for b team 
-        penalty, refereeMsg.time_p_1, refereeMsg.warnings_1, refereeMsg.ycards_1, refereeMsg.rcards_1, refereeMsg.gkeeper_1 = struct.unpack('6B',playerinfo)
+        penalty, refereeMsg.penaltyTime, refereeMsg.warnings, refereeMsg.yellowCards, refereeMsg.redCards, refereeMsg.gkFlag = struct.unpack('6B',playerinfo)
 
 
 
@@ -82,40 +82,43 @@ class GameStateDecoder:
         refereeMsg.drop_in_time = dropInTimeFirst8Bytes | (dropInTimeLast8Bytes<<8)
         refereeMsg.secs_remaining = timeFirs8Bytes|(timeLast8Bytes<<8)
         refereeMsg.secondary_time = secondaryTimeFirst8Bytes|(secondaryTimeLast8Bytes<<8)
-        refereeMsg.penalty_1=self._penalty.get(penalty)
+        refereeMsg.penalty=self._penalty.get(penalty)
 
 
         #important information about humanoid state of play
-        if (refereeMsg.state == "quieto") | (refereeMsg.rcards_1 == 1) | (refereeMsg.time_p_1 != 0) | (refereeMsg.secondary_state == "Timeout") | ((refereeMsg.submode == "still") & (refereeMsg.secondary_state !="Normal")):
-            refereeMsg.important = "quieto"
-            refereeMsg.I = 0
+        if (refereeMsg.state == "quieto") | (refereeMsg.redCards == 1) | (refereeMsg.penaltyTime != 0) | (refereeMsg.secondary_state == "Timeout") | ((refereeMsg.submode == "still") & (refereeMsg.secondary_state !="Normal")):
+            refereeMsg.robotPlayState = "quieto"
+            refereeMsg.robotPlayStateInt = 0
             return refereeMsg
         if (refereeMsg.state == "Ready"):
-            refereeMsg.important = "acomodate"
-            refereeMsg.I = 1
+            refereeMsg.robotPlayState = "acomodate"
+            refereeMsg.robotPlayStateInt = 1
             return refereeMsg
-        if (refereeMsg.state == "Playing") & (refereeMsg.secondary_state == "Normal") & (refereeMsg.rcards_1 == 0) & (refereeMsg.time_p_1 == 0) :
-            refereeMsg.important = "playing"
-            refereeMsg.I = 2
+        if (refereeMsg.state == "Playing") & (refereeMsg.secondary_state == "Normal") & (refereeMsg.redCards == 0) & (refereeMsg.penaltyTime == 0):
+            refereeMsg.robotPlayState = "playing"
+            refereeMsg.robotPlayStateInt = 2
             return refereeMsg
-        if (refereeMsg.secondary_state != "Normal") & (refereeMsg.team_p == 10) & (refereeMsg.submode != "still"):
-            refereeMsg.important = "acercate"
-            refereeMsg.I = 3
+        if (refereeMsg.secondary_state != "Normal") & (refereeMsg.teamPerformingSubMode == 10) & (refereeMsg.submode != "still"):
+            refereeMsg.robotPlayState = "acercate"
+            refereeMsg.robotPlayStateInt = 3
             return refereeMsg
-        if (refereeMsg.secondary_state != "Normal") & (refereeMsg.team_p != 10) & (refereeMsg.submode != "still"):
-            refereeMsg.important = "alejate"
-            refereeMsg.I = 4
+        if (refereeMsg.secondary_state != "Normal") & (refereeMsg.teamPerformingSubMode != 10) & (refereeMsg.submode != "still"):
+            refereeMsg.robotPlayState = "alejate"
+            refereeMsg.robotPlayStateInt = 4
             return refereeMsg
     
 
 class RefereePublisher:
     def __init__(self, nodeName):
-        rospy.init_node(nodeName, anonymous=True)
         self.robotID = rospy.get_param('robot_id', 0)
-        self._pub = rospy.Publisher(f'robotis_{self.robotID}/r_data', referee, queue_size=1)
+        rospy.init_node(f"nodeName_{self.robotID+1}", anonymous=True)
+        #robot id starts from 0, but GameController starts from 1
+        self._pub = rospy.Publisher(f'robotis_{self.robotID+1}/refereeData', referee, queue_size=1)
         self.refereeMsg = referee()
     def publish(self,msg):
-        self.pub.publish(msg)
+        rospy.loginfo(f"publishing from robot_{self.robotID+1} which has ID={self.robotID}")
+        self._pub.publish(msg)
+        
 
 class UDPCommunication:
 
@@ -123,7 +126,7 @@ class UDPCommunication:
     header = b'RGrt'    # Header RGrt
     version = 2         # Versión de la estructura de datos
     team = 14            # Número de equipo
-    message = 2      # Mensaje (0: GAMECONTROLLER_RETURN_MSG_ALIVE, 1: GAMECONTROLLER_RETURN_MSG_MAN_PENALISE, 2: GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE)
+    stdMsg = 2      # Mensaje (0: GAMECONTROLLER_RETURN_MSG_ALIVE, 1: GAMECONTROLLER_RETURN_MSG_MAN_PENALISE, 2: GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE)
 
     def __init__(self, publisherIp, refereeIp, listeningPort, sendingPort):
         self._ip = publisherIp
@@ -132,7 +135,7 @@ class UDPCommunication:
         self._sendingPort = sendingPort
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)  #new datagram socket IPv4 
         self.returnSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind(self._ip,self._listeningPort)
+        self.sock.bind((self._ip,self._listeningPort))
 
     def listenReferee(self):
         data, addr = self.sock.recvfrom(1024) #1024 bytes
@@ -141,14 +144,15 @@ class UDPCommunication:
         self.returnSock.sendto(msg, (self._refereeIp,self._sendingPort))
 
 
-
 def main():
-    udpHandler = UDPCommunication("127.0.0.1","0.0.0.0",3838,3939)
+    udpHandler = UDPCommunication("0.0.0.0","0.0.0.0",3838,3939)#
     refPublisher = RefereePublisher("refereeNode")
     decoder = GameStateDecoder()
+    msg2referee = struct.pack('<4s4B', UDPCommunication.header,UDPCommunication.version,UDPCommunication.team,refPublisher.robotID, UDPCommunication.stdMsg)      # Mensaje (0: GAMECONTROLLER_RETURN_MSG_ALIVE, 1: GAMECONTROLLER_RETURN_MSG_MAN_PENALISE, 2: GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE)
     while not rospy.is_shutdown():
         rawData =udpHandler.listenReferee()
         formattedMsg = decoder.decode(rawData,refPublisher.refereeMsg,refPublisher.robotID)
+        udpHandler.talk2Referee(msg2referee)
         refPublisher.publish(formattedMsg)
 if __name__ == '__main__':
     main()
