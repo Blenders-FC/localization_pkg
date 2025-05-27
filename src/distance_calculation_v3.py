@@ -16,27 +16,21 @@ pan_rad = math.radians(pan_deg)
 #               [0,  0,  1]])
 # dist_coeffs = np.array([0.05977197, -0.33388722, 0.00231276, 0.00264637, 0.47509537])
 
-# Soccer ball parameters
-D = 0.12  # meters (FIFA size 1 ball)
-
 # Detected from image
-u, v = 320, 240          # Center of ball in image (pixels)
-diameter = 36            # Diameter of ball in image (pixels)
+u, v = 640, 0          # Center of ball in image (pixels)
 
 # undistort the detected pixel
 # pts = np.array([[[u, v]]], dtype=np.float32)
 # undistorted_pts = cv2.undistortPoints(pts, K, dist_coeffs, P=K)
 # u, v = undistorted_pts[0,0,0], undistorted_pts[0,0,1]
 
-# Step 1: Calculate Z (depth from camera to ball center)
-f = (fx + fy) / 2
-Z_cam = f * D / diameter
+# Step 1: Back-project to (X_cam, Y_cam, Z_cam) in camera frame
+X_cam = (u - cx) / fx
+Y_cam = (v - cy) / fy
+direction_camera  = np.array([X_cam, Y_cam, 1.0])
+direction_camera = direction_camera / np.linalg.norm(direction_camera)
 
-# Step 2: Back-project to (X_cam, Y_cam, Z_cam) in camera frame
-X_cam = (u - cx) * Z_cam / fx
-Y_cam = (v - cy) * Z_cam / fy
-
-# ---- Camera frame to robot/world frame ----
+# Step 2: Camera frame to robot/world frame
 # Rotation matrix for tilt (around camera X), then pan (around camera Z)
 R_tilt = np.array([
     [1, 0, 0],
@@ -50,20 +44,24 @@ R_pan = np.array([
 ])
 # Full rotation (pan * tilt)
 R = R_pan @ R_tilt
+direction_world = R @ direction_camera
 
 # The camera's position relative to robot base (assuming z = camera_height)
-cam_pos_in_robot = np.array([camera_height, 0, 0])
+camera_pos = np.array([0, camera_height, 0])  # (X, Y, Z)
 
-# Transform ball vector to robot/world frame
-ball_cam = np.array([Z_cam, X_cam, Y_cam])
+# Step 3: Transform ball vector to robot/world frame (intersection with ground plane)
+t = -camera_height / direction_world[1]
+point_ground = camera_pos + t * direction_world
+print(point_ground)
+print(direction_world)
+print(camera_pos)
+print(t * direction_world)
 
-ball_robot = R @ ball_cam + cam_pos_in_robot
-
-# ----- Output -----
-print(f"Ball position in camera frame: X={X_cam:.2f} m, Y={Y_cam:.2f} m, Z={Z_cam:.2f} m")
-print(f"Ball position in robot frame:  X={ball_robot[0]:.2f} m, Y={ball_robot[1]:.2f} m, Z={ball_robot[2]:.2f} m")
+print(f"Ground intersection point: X={point_ground[0]:.3f} m, Y={point_ground[1]:.3f} m, Z={point_ground[2]:.3f} m")
+# # 2D field coordinates (X, Z):
+# print(f"Field coordinates: X={point_ground[0]:.3f} m, Z={point_ground[2]:.3f} m")
 
 # Horizontal bearing in robot frame:
-theta_rad = np.arctan2(ball_robot[1], ball_robot[0])
+theta_rad = np.arctan2(point_ground[1], point_ground[0])
 theta_deg = np.degrees(theta_rad)
 print(f"Ball horizontal bearing in robot frame: {theta_deg:.2f} deg")
