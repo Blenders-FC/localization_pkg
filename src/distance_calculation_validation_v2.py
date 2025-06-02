@@ -8,6 +8,7 @@ camera_height = 0.46
 
 # Camera orientation
 tilt_deg = -10.0  # Down tilt (negative = down)
+tilt_deg -= 7  # hip pitch
 pan_deg  = 25.0   # Pan right (positive = right)
 tilt_rad = np.radians(tilt_deg)
 pan_rad  = np.radians(pan_deg)

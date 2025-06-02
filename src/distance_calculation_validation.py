@@ -7,6 +7,7 @@ fx, fy = 644.24495292, 646.70221114
 cx, cy = 329.96326873, 236.89398176
 camera_height = 0.46  # meters
 tilt_deg = -10.0
+tilt_deg -= 7  # hip pitch
 pan_deg = 0.0
 tilt_rad = math.radians(tilt_deg)
 pan_rad = math.radians(pan_deg)

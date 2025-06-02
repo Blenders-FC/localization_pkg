@@ -32,6 +32,7 @@ class BallProjector:
 
     def angle_callback(self, msg):
         self.pan_rad, self.tilt_rad = msg.position[0], msg.position[1]
+        self.tilt_rad -= 0.122173  # 7° hip pitch
         self.try_estimate()
 
     def pixel_callback(self, msg):

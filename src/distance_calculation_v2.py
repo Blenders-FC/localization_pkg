@@ -7,6 +7,7 @@ fx, fy = 644.24495292, 646.70221114
 cx, cy = 320.0, 240.0
 camera_height = 0.46  # meters above ground
 tilt_deg = -10.0      # camera tilt down from horizontal
+tilt_deg -= 7  # hip pitch
 pan_deg = 0.0         # camera pan (left/right, zero if looking forward)
 tilt_rad = math.radians(tilt_deg)
 pan_rad = math.radians(pan_deg)

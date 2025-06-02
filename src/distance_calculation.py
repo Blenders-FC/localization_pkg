@@ -7,6 +7,7 @@ fx, fy = 644.24495292, 646.70221114
 cx, cy = 320.0, 240.0
 camera_height = 0.46  # meters
 tilt_deg = -10.0
+tilt_deg -= 7  # hip pitch
 pan_deg = 0.0
 tilt_rad = math.radians(tilt_deg)
 
@@ -18,7 +19,7 @@ dist_coeffs = np.array([0.05977197, -0.33388722, 0.00231276, 0.00264637, 0.47509
 
 # === Ball Detection (Example) ===
 # Let's say you found the ball at pixel (bx, by) = (300, 280)
-bx, by = 630, 150
+bx, by = 320, 240
 pixel = np.array([[[bx, by]]], dtype=np.float32)
 
 # === Step 1: Convert to normalized direction vector ===
