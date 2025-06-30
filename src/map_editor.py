@@ -25,6 +25,7 @@ last_draw_color_mode = DRAW_OBSTACLE
 COLOR_FREE = 255
 COLOR_OBSTACLE = 0
 COLOR_MARK = 128
+LINE_THICKNESS = 3
 
 # Map image and history
 map_img = np.full((MAP_HEIGHT, MAP_WIDTH), COLOR_FREE, dtype=np.uint8)
@@ -98,7 +99,7 @@ def draw_preview(img):
             radius = int(np.hypot(end_point[0]-shape_start_point[0], end_point[1]-shape_start_point[1]))
             cv2.circle(img, shape_start_point, radius, color, 1)
         elif current_draw_mode in [DRAW_LINE, DRAW_LINE_CONT]:
-            cv2.line(img, shape_start_point, end_point, color, 1)
+            cv2.line(img, shape_start_point, end_point, color, LINE_THICKNESS)
 
 def draw_mouse_info(img):
     if current_mouse_pos and show_coords:
@@ -154,10 +155,10 @@ def apply_shape(x, y):
         cv2.circle(map_img, shape_start_point, radius, color, -1)
         print(f"Drew circle at {shape_start_point} with radius {radius}")
     elif current_draw_mode == DRAW_LINE:
-        cv2.line(map_img, shape_start_point, end_point, color, 1)
+        cv2.line(map_img, shape_start_point, end_point, color, LINE_THICKNESS)
         print(f"Drew line from {shape_start_point} to {end_point}")
     elif current_draw_mode == DRAW_LINE_CONT:
-        cv2.line(map_img, shape_start_point, end_point, color, 1)
+        cv2.line(map_img, shape_start_point, end_point, color, LINE_THICKNESS)
         print(f"Drew line from {shape_start_point} to {end_point}")
         shape_start_point = end_point
     manual_size = None
