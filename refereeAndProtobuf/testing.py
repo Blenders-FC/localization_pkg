@@ -142,7 +142,7 @@ class UDPCommunication:
 
     def listenReferee(self):
         data, addr = self.sock.recvfrom(1024) #1024 bytes
-        print(addr)
+        print(data)
         return data
     def talk2Referee(self, msg):
         print(f"sending {msg}")
@@ -157,14 +157,15 @@ class GameControlReturnData:
     player: int
     msg: int
 def main():
-    udpHandler = UDPCommunication("192.168.0.255","192.168.0.162",3838,3939)
+    udpHandler = UDPCommunication("0.0.0.0","0.0.0.0",3838,3939)
     msg2referee = struct.pack('<4s4B', b'RGrt',2,6,1,4)
     # refPublisher = RefereePublisher("refereeNode")
-    decoder = GameStateDecoder()
+    # decoder = GameStateDecoder()
+    print("test")
     while True:
         rawData =udpHandler.listenReferee()
         udpHandler.talk2Referee(msg2referee)
-        # formattedMsg = decoder.decode(rawData,refPublisher.refereeMsg,refPublisher.robotID)
-        # refPublisher.publish(formattedMsg)
+        #formattedMsg = decoder.decode(rawData,refPublisher.refereeMsg,refPublisher.robotID)
+        #refPublisher.publish(formattedMsg)
 if __name__ == '__main__':
     main()
