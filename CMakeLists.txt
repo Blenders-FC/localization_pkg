@@ -10,10 +10,22 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   humanoid_nav_msgs
   std_srvs
+  message_generation
+)
+
+add_service_files(
+  FILES
+  GetRelativeFootsteps.srv
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  humanoid_nav_msgs
 )
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs humanoid_nav_msgs
+  CATKIN_DEPENDS roscpp std_msgs humanoid_nav_msgs std_srvs message_runtime
 )
 
 include_directories(

@@ -11,7 +11,7 @@
     <remap from="map" to="projected_map" />
   </node>
   
-  <node pkg="localization_pkg" type="soccer_localization_node" name="soccer_localization_node">
+  <node pkg="localization_pkg" type="soccer_localization_node" name="soccer_localization_node" output="screen">
     <param name="robot_id"               value="1"/>
   </node>
 

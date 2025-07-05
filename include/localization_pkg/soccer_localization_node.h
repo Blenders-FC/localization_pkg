@@ -3,22 +3,22 @@
 
 #include <ros/ros.h>
 #include <humanoid_nav_msgs/PlanFootsteps.h>
-#include <std_srvs/Trigger.h>
+#include "localization_pkg/GetRelativeFootsteps.h"
 
-class LocalizationNode
+class SoccerLocalizationNode
 {
 public:
-  LocalizationNode();
+  SoccerLocalizationNode();
 
 private:
   ros::NodeHandle nh_;
   ros::ServiceClient footstep_client_;
   ros::ServiceServer trigger_service_;
 
-  bool triggerCallback(std_srvs::Trigger::Request &req,
-                       std_srvs::Trigger::Response &res);
+  bool triggerCallback(localization_pkg::GetRelativeFootsteps::Request &req,
+                      localization_pkg::GetRelativeFootsteps::Response &res);
 
-  void callFootstepPlanner();
+  std::vector<humanoid_nav_msgs::StepTarget> callFootstepPlanner();
 
   int robot_id;
 };
