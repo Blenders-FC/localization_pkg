@@ -18,13 +18,14 @@ private:
   bool triggerCallback(localization_pkg::GetRelativeFootsteps::Request &req,
                        localization_pkg::GetRelativeFootsteps::Response &res);
 
-  std::vector<humanoid_nav_msgs::StepTarget> callFootstepPlanner(double goal_x, double goal_y, double goal_theta)
+  std::vector<humanoid_nav_msgs::StepTarget> callFootstepPlanner(double start_x, double start_y, double start_theta,
+                                                                 double goal_x, double goal_y, double goal_theta);
 
   int robot_id;
   
-  double FEET_SEPARATION = 0.1; // 10CM
+  double FEET_DISTANCE = 0.1; // 10CM
   double FEET_OFFSET = 0.015;   // 1.5CM
-  double FEET_SEPARATION = FEET_SEPARATION + FEET_OFFSET; 
+  double FEET_SEPARATION = FEET_DISTANCE+ FEET_OFFSET; // 10 + 1.5 CM
 };
 
 #endif // SOCCER_LOCALIZATION_NODE_H

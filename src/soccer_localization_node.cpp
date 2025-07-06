@@ -28,7 +28,6 @@ bool SoccerLocalizationNode::triggerCallback(localization_pkg::GetRelativeFootst
   if (footsteps_plan.empty())
   {
     res.success = false;
-    res.message = "Planner returned no footsteps.";
     return true;
   }
 
@@ -51,8 +50,8 @@ bool SoccerLocalizationNode::triggerCallback(localization_pkg::GetRelativeFootst
     }
 
     relative_step.pose.x = relative_step.pose.x / 2;
-    if (fabs(relative_step.pose.y) > FOOT_SEPARATION)
-      relative_step.pose.y = (relative_step.pose.y - FOOT_SEPARATION) / 2;
+    if (fabs(relative_step.pose.y) > FEET_SEPARATION)
+      relative_step.pose.y = (relative_step.pose.y - FEET_SEPARATION) / 2;
     else
       relative_step.pose.y = 0.0;
 
@@ -61,7 +60,6 @@ bool SoccerLocalizationNode::triggerCallback(localization_pkg::GetRelativeFootst
   }
 
   res.success = true;
-  res.message = "Relative footstep plan generated";
   res.relative_plan = relative_plan;
 
   return true;
