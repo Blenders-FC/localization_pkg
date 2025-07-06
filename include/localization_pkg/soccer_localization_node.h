@@ -16,11 +16,15 @@ private:
   ros::ServiceServer trigger_service_;
 
   bool triggerCallback(localization_pkg::GetRelativeFootsteps::Request &req,
-                      localization_pkg::GetRelativeFootsteps::Response &res);
+                       localization_pkg::GetRelativeFootsteps::Response &res);
 
-  std::vector<humanoid_nav_msgs::StepTarget> callFootstepPlanner();
+  std::vector<humanoid_nav_msgs::StepTarget> callFootstepPlanner(double goal_x, double goal_y, double goal_theta)
 
   int robot_id;
+  
+  double FEET_SEPARATION = 0.1; // 10CM
+  double FEET_OFFSET = 0.015;   // 1.5CM
+  double FEET_SEPARATION = FEET_SEPARATION + FEET_OFFSET; 
 };
 
 #endif // SOCCER_LOCALIZATION_NODE_H

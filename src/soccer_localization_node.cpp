@@ -6,9 +6,9 @@ SoccerLocalizationNode::SoccerLocalizationNode()
 
   nh_.param<int>("robot_id", robot_id, 0);
 
-  std::string service_name = "/robotis_" + std::to_string(robot_id) + "/soccer_localization_node/call_footstep_planner";
+  std::string service_name = "robotis_" + std::to_string(robot_id) + "/soccer_localization_node/call_footstep_planner";
 
-  trigger_service_ = nh_.advertiseService("soccer_localization_node/call_footstep_planner",
+  trigger_service_ = nh_.advertiseService(service_name,
                                           &SoccerLocalizationNode::triggerCallback,
                                           this);
 
@@ -16,14 +16,19 @@ SoccerLocalizationNode::SoccerLocalizationNode()
 }
 
 bool SoccerLocalizationNode::triggerCallback(localization_pkg::GetRelativeFootsteps::Request &req,
-  localization_pkg::GetRelativeFootsteps::Response &res)
+                                             localization_pkg::GetRelativeFootsteps::Response &res)
 {
-  ROS_INFO("Trigger service called: calling footstep planner...");
-  auto footsteps_plan = callFootstepPlanner();
+  ROS_INFO("Trigger service called: start(%.3f, %.3f, %.3f), goal(%.3f, %.3f, %.3f)",
+           req.start_x, req.start_y, req.start_theta,
+           req.goal_x, req.goal_y, req.goal_theta);
+
+  auto footsteps_plan = callFootstepPlanner(req.start_x, req.start_y, req.start_theta,
+                                            req.goal_x, req.goal_y, req.goal_theta);
 
   if (footsteps_plan.empty())
   {
     res.success = false;
+    res.message = "Planner returned no footsteps.";
     return true;
   }
 
@@ -44,30 +49,37 @@ bool SoccerLocalizationNode::triggerCallback(localization_pkg::GetRelativeFootst
       relative_step.pose.y = footsteps_plan[i].pose.y - footsteps_plan[i-1].pose.y;
       relative_step.pose.theta = footsteps_plan[i].pose.theta - footsteps_plan[i-1].pose.theta;
     }
+
+    relative_step.pose.x = relative_step.pose.x / 2;
+    if (fabs(relative_step.pose.y) > FOOT_SEPARATION)
+      relative_step.pose.y = (relative_step.pose.y - FOOT_SEPARATION) / 2;
+    else
+      relative_step.pose.y = 0.0;
+
     relative_step.leg = footsteps_plan[i].leg;
     relative_plan.push_back(relative_step);
   }
 
   res.success = true;
+  res.message = "Relative footstep plan generated";
   res.relative_plan = relative_plan;
 
   return true;
 }
 
-std::vector<humanoid_nav_msgs::StepTarget> SoccerLocalizationNode::callFootstepPlanner()
+std::vector<humanoid_nav_msgs::StepTarget> SoccerLocalizationNode::callFootstepPlanner(
+                                          double start_x, double start_y, double start_theta,
+                                          double goal_x, double goal_y, double goal_theta)
 {
   humanoid_nav_msgs::PlanFootsteps srv;
-  std::vector<humanoid_nav_msgs::StepTarget> empty_result;
 
-  // start pose
-  srv.request.start.x = 0.0;
-  srv.request.start.y = 0.0;
-  srv.request.start.theta = 0.0;
+  srv.request.start.x = start_x;
+  srv.request.start.y = start_y;
+  srv.request.start.theta = start_theta;
 
-  // goal pose
-  srv.request.goal.x = 1.0;
-  srv.request.goal.y = 0.0;
-  srv.request.goal.theta = 0.0;
+  srv.request.goal.x = goal_x;
+  srv.request.goal.y = goal_y;
+  srv.request.goal.theta = goal_theta;
 
   if (footstep_client_.call(srv))
   {
@@ -89,8 +101,7 @@ std::vector<humanoid_nav_msgs::StepTarget> SoccerLocalizationNode::callFootstepP
   }
   else
   {
-    ROS_WARN("Failed to call /plan_footsteps service");
-    return empty_result;
+    return {};
   }
 }
 
