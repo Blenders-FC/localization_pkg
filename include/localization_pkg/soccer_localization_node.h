@@ -3,6 +3,12 @@
 
 #include <ros/ros.h>
 #include <humanoid_nav_msgs/PlanFootsteps.h>
+#include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/Pose.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <humanoid_nav_msgs/StepTarget.h>
+
 #include "localization_pkg/GetRelativeFootsteps.h"
 
 class SoccerLocalizationNode
@@ -14,6 +20,7 @@ private:
   ros::NodeHandle nh_;
   ros::ServiceClient footstep_client_;
   ros::ServiceServer trigger_service_;
+  ros::Publisher footstep_pose_pub_;
 
   bool triggerCallback(localization_pkg::GetRelativeFootsteps::Request &req,
                        localization_pkg::GetRelativeFootsteps::Response &res);

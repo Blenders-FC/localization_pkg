@@ -12,6 +12,8 @@ SoccerLocalizationNode::SoccerLocalizationNode()
                                           &SoccerLocalizationNode::triggerCallback,
                                           this);
 
+  footstep_pose_pub_ = nh_.advertise<geometry_msgs::PoseArray>("footstep_absolute_poses", 10);
+
   ROS_INFO("SoccerLocalizationNode ready. Call %s to trigger footstep planning.", service_name.c_str());
 }
 
@@ -94,6 +96,7 @@ std::vector<humanoid_nav_msgs::StepTarget> SoccerLocalizationNode::callFootstepP
                step.pose.theta,
                step.leg);
     }
+    publishFootstepPoses(srv.response.footsteps, start_x, start_y, start_theta);
 
     return srv.response.footsteps;
   }
@@ -102,6 +105,52 @@ std::vector<humanoid_nav_msgs::StepTarget> SoccerLocalizationNode::callFootstepP
     return {};
   }
 }
+
+void SoccerLocalizationNode::publishFootstepPoses(const std::vector<humanoid_nav_msgs::StepTarget>& footsteps,
+                                                  double start_x, double start_y, double start_theta)
+{
+  geometry_msgs::PoseArray pose_array_msg;
+  pose_array_msg.header.stamp = ros::Time::now();
+
+  double x_ini = start_x;
+  double y_ini = start_y;
+  double theta = start_theta;
+
+  for (const auto& step : footsteps)
+  {
+    // transform relative footsteps to absolute coordinates
+    double rel_x = step.pose.x;
+    double rel_y = step.pose.y;
+    double rel_theta = step.pose.theta;
+
+    double abs_x = x + rel_x * cos(theta) - rel_y * sin(theta);
+    double abs_y = y + rel_x * sin(theta) + rel_y * cos(theta);
+    double abs_theta = theta + rel_theta;
+
+    // normalize angle between -pi and pi
+    abs_theta = atan2(sin(abs_theta), cos(abs_theta));
+
+    geometry_msgs::Pose pose;
+    pose.position.x = abs_x;
+    pose.position.y = abs_y;
+    pose.position.z = 0.0;
+
+    tf2::Quaternion q;
+    q.setRPY(0, 0, abs_theta);
+    pose.orientation = tf2::toMsg(q);
+
+    pose_array_msg.poses.push_back(pose);
+
+    // update current pose for next step
+    x = abs_x;
+    y = abs_y;
+    theta = abs_theta;
+  }
+
+  footstep_pose_pub_.publish(pose_array_msg);
+  ROS_INFO("Published %zu footstep absolute poses.", pose_array_msg.poses.size());
+}
+
 
 
 int main(int argc, char** argv)
