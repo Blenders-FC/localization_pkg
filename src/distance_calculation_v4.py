@@ -42,9 +42,9 @@ K = np.array([
 # Example: Identity (looking forward, at origin)
 # Combined rotation matrix: first pan, then tilt
 R = R_tilt @ R_pan
-t = np.array([[0],    # Replace with your translation vector (3x1)
-              [1],
-              [0]]) # Example: Camera 1m above the ground
+# t = np.array([[0],    # Replace with your translation vector (3x1)
+#               [1],
+#               [0]]) # Example: Camera 1m above the ground
 
 # Pixel coordinates
 u, v = 320, 240       # Replace with your pixel of interest
