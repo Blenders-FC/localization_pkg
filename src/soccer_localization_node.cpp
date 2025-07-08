@@ -12,7 +12,7 @@ SoccerLocalizationNode::SoccerLocalizationNode()
                                           &SoccerLocalizationNode::triggerCallback,
                                           this);
 
-  footstep_pose_pub_ = nh_.advertise<geometry_msgs::PoseArray>("footstep_absolute_poses", 10);
+  absolute_pose_pub_ = nh_.advertise<geometry_msgs::PoseArray>("footstep_absolute_poses", 10);
 
   ROS_INFO("SoccerLocalizationNode ready. Call %s to trigger footstep planning.", service_name.c_str());
 }
@@ -96,7 +96,6 @@ std::vector<humanoid_nav_msgs::StepTarget> SoccerLocalizationNode::callFootstepP
                step.pose.theta,
                step.leg);
     }
-    publishFootstepPoses(srv.response.footsteps, start_x, start_y, start_theta);
 
     return srv.response.footsteps;
   }
@@ -106,52 +105,48 @@ std::vector<humanoid_nav_msgs::StepTarget> SoccerLocalizationNode::callFootstepP
   }
 }
 
-void SoccerLocalizationNode::publishFootstepPoses(const std::vector<humanoid_nav_msgs::StepTarget>& footsteps,
-                                                  double start_x, double start_y, double start_theta)
+void SoccerLocalizationNode::relativePoseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 {
-  geometry_msgs::PoseArray pose_array_msg;
-  pose_array_msg.header.stamp = ros::Time::now();
+    
+    double rel_x = msg->position.x;
+    double rel_y = msg->position.y;
 
-  double x_ini = start_x;
-  double y_ini = start_y;
-  double theta = start_theta;
+    tf2::Quaternion q(
+        msg->orientation.x,
+        msg->orientation.y,
+        msg->orientation.z,
+        msg->orientation.w);
+    double roll, pitch, rel_theta;
+    tf2::Matrix3x3(q).getRPY(roll, pitch, rel_theta);
 
-  for (const auto& step : footsteps)
-  {
-    // transform relative footsteps to absolute coordinates
-    double rel_x = step.pose.x;
-    double rel_y = step.pose.y;
-    double rel_theta = step.pose.theta;
+    // compute absolute pose
+    double abs_x = abs_x_ + rel_x * cos(abs_theta_) - rel_y * sin(abs_theta_);
+    double abs_y = abs_y_ + rel_x * sin(abs_theta_) + rel_y * cos(abs_theta_);
+    double abs_theta = abs_theta_ + rel_theta;
 
-    double abs_x = x + rel_x * cos(theta) - rel_y * sin(theta);
-    double abs_y = y + rel_x * sin(theta) + rel_y * cos(theta);
-    double abs_theta = theta + rel_theta;
-
-    // normalize angle between -pi and pi
+    // normalize angle
     abs_theta = atan2(sin(abs_theta), cos(abs_theta));
 
-    geometry_msgs::Pose pose;
-    pose.position.x = abs_x;
-    pose.position.y = abs_y;
-    pose.position.z = 0.0;
+    // update internal state
+    abs_x_ = abs_x;
+    abs_y_ = abs_y;
+    abs_theta_ = abs_theta;
 
-    tf2::Quaternion q;
-    q.setRPY(0, 0, abs_theta);
-    pose.orientation = tf2::toMsg(q);
+    // prepare Pose message
+    geometry_msgs::Pose abs_pose_msg;
+    abs_pose_msg.position.x = abs_x;
+    abs_pose_msg.position.y = abs_y;
+    abs_pose_msg.position.z = 0.0;
 
-    pose_array_msg.poses.push_back(pose);
+    tf2::Quaternion q_out;
+    q_out.setRPY(0, 0, abs_theta);
+    abs_pose_msg.orientation = tf2::toMsg(q_out);
 
-    // update current pose for next step
-    x = abs_x;
-    y = abs_y;
-    theta = abs_theta;
-  }
+    // publish
+    absolute_pose_pub_.publish(abs_pose_msg);
 
-  footstep_pose_pub_.publish(pose_array_msg);
-  ROS_INFO("Published %zu footstep absolute poses.", pose_array_msg.poses.size());
+    ROS_INFO("Published absolute pose: x=%.3f, y=%.3f, theta=%.3f", abs_x, abs_y, abs_theta);
 }
-
-
 
 int main(int argc, char** argv)
 {
