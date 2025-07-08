@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   humanoid_nav_msgs
   std_srvs
   message_generation
+  tf
 )
 
 add_service_files(
