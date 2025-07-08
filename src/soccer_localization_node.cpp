@@ -12,10 +12,7 @@ SoccerLocalizationNode::SoccerLocalizationNode()
                                           &SoccerLocalizationNode::triggerCallback,
                                           this);
 
-<<<<<<< HEAD
   relative_pose_sub_ = nh_.subscribe("current_step_pose", 10, &SoccerLocalizationNode::relativePoseCallback, this);
-=======
->>>>>>> origin/steps_planner
   absolute_pose_pub_ = nh_.advertise<geometry_msgs::PoseArray>("footstep_absolute_poses", 10);
 
   ROS_INFO("SoccerLocalizationNode ready. Call %s to trigger footstep planning.", service_name.c_str());
@@ -115,32 +112,20 @@ void SoccerLocalizationNode::relativePoseCallback(const geometry_msgs::Pose::Con
     double rel_x = msg->position.x;
     double rel_y = msg->position.y;
 
-<<<<<<< HEAD
     tf::Quaternion q(
-=======
-    tf2::Quaternion q(
->>>>>>> origin/steps_planner
         msg->orientation.x,
         msg->orientation.y,
         msg->orientation.z,
         msg->orientation.w);
     double roll, pitch, rel_theta;
-<<<<<<< HEAD
     tf::Matrix3x3(q).getRPY(roll, pitch, rel_theta);
-=======
-    tf2::Matrix3x3(q).getRPY(roll, pitch, rel_theta);
->>>>>>> origin/steps_planner
 
     // compute absolute pose
     double abs_x = abs_x_ + rel_x * cos(abs_theta_) - rel_y * sin(abs_theta_);
     double abs_y = abs_y_ + rel_x * sin(abs_theta_) + rel_y * cos(abs_theta_);
     double abs_theta = abs_theta_ + rel_theta;
 
-<<<<<<< HEAD
     // normalize angle to [-pi, pi]
-=======
-    // normalize angle
->>>>>>> origin/steps_planner
     abs_theta = atan2(sin(abs_theta), cos(abs_theta));
 
     // update internal state
@@ -148,26 +133,14 @@ void SoccerLocalizationNode::relativePoseCallback(const geometry_msgs::Pose::Con
     abs_y_ = abs_y;
     abs_theta_ = abs_theta;
 
-<<<<<<< HEAD
-    // pubñish absolute coordinates
-=======
-    // prepare Pose message
->>>>>>> origin/steps_planner
+    // publish absolute coordinates
     geometry_msgs::Pose abs_pose_msg;
     abs_pose_msg.position.x = abs_x;
     abs_pose_msg.position.y = abs_y;
     abs_pose_msg.position.z = 0.0;
 
-<<<<<<< HEAD
     abs_pose_msg.orientation = tf::createQuaternionMsgFromYaw(abs_theta);
 
-=======
-    tf2::Quaternion q_out;
-    q_out.setRPY(0, 0, abs_theta);
-    abs_pose_msg.orientation = tf2::toMsg(q_out);
-
-    // publish
->>>>>>> origin/steps_planner
     absolute_pose_pub_.publish(abs_pose_msg);
 
     ROS_INFO("Published absolute pose: x=%.3f, y=%.3f, theta=%.3f", abs_x, abs_y, abs_theta);
