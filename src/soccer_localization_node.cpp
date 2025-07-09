@@ -12,8 +12,8 @@ SoccerLocalizationNode::SoccerLocalizationNode()
                                           &SoccerLocalizationNode::triggerCallback,
                                           this);
 
-  relative_pose_sub_ = nh_.subscribe("current_step_pose", 10, &SoccerLocalizationNode::relativePoseCallback, this);
-  absolute_pose_pub_ = nh_.advertise<geometry_msgs::PoseArray>("footstep_absolute_poses", 10);
+  relative_pose_sub_ = nh_.subscribe("/robotis_" + std::to_string(robot_id) + "/relative_pose_steps", 10, &SoccerLocalizationNode::relativePoseCallback, this);
+  absolute_pose_pub_ = nh_.advertise<geometry_msgs::PoseArray>("/robotis_" + std::to_string(robot_id) + "/footstep_absolute_poses", 10);
 
   ROS_INFO("SoccerLocalizationNode ready. Call %s to trigger footstep planning.", service_name.c_str());
 }

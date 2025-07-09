@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="robot_id"              default="1"/>
+  <arg name="robot_id"              default="4"/>
   <param name="robot_id"            value="$(arg robot_id)"/>
 
   <include file="$(find localization_pkg)/launch/map_loader.launch" />
