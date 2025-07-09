@@ -110,7 +110,9 @@ void SoccerLocalizationNode::relativePoseCallback(const geometry_msgs::Pose::Con
 {
     
     double rel_x = msg->position.x;
+    rel_x = rel_x * 2;
     double rel_y = msg->position.y;
+    rel_y = (rel_y * 2) + FEET_SEPARATION;
 
     tf::Quaternion q(
         msg->orientation.x,
