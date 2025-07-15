@@ -10,7 +10,6 @@
   <author email="robotec.gdl@gmail.com">Blenders team</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
