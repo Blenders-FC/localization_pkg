@@ -152,7 +152,7 @@ class UDPCommunication:
 
 
 def main():
-    udpHandler = UDPCommunication("0.0.0.0","0.0.0.0",3838,3939) #
+    udpHandler = UDPCommunication("192.168.0.255","192.168.0.2",3838,3939) #
     refPublisher = RefereePublisher("refereeNode")
     decoder = GameStateDecoder()
     msg2referee = struct.pack('<4s4B', UDPCommunication.header,UDPCommunication.version,UDPCommunication.team,refPublisher.robotID, UDPCommunication.stdMsg)      # Mensaje (0: GAMECONTROLLER_RETURN_MSG_ALIVE, 1: GAMECONTROLLER_RETURN_MSG_MAN_PENALISE, 2: GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE)
