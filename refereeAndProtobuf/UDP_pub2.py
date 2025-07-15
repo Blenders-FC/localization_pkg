@@ -2,7 +2,7 @@
 # coding=utf-8
 
 import rospy
-from soccer_pkg.msg import referee
+from blenders_msgs.msg import referee
 import socket
 import struct
 
@@ -52,8 +52,9 @@ class GameStateDecoder:
         8: "Goal Kick",
         9: "Throw-In"
         }
-    def decode(self,rawData, refereeMsg, playerNumber):
+    def decode(self,rawData, refereeMsg, robotID):
         #first part
+        playerNumber= playerNumber-1
         protocolFirst8Bytes, protocolLast8Bytes, refereeMsg.packet_number, refereeMsg.players_per_team, gameType, state, refereeMsg.first_half, refereeMsg.kick_off_team, s_state, refereeMsg.teamPerformingSubMode, submode = struct.unpack('11B',rawData[4:15])
         #second part
         refereeMsg.drop_in_team, dropInTimeFirst8Bytes, dropInTimeLast8Bytes, timeFirs8Bytes, timeLast8Bytes, secondaryTimeFirst8Bytes, secondaryTimeLast8Bytes = struct.unpack('7B',rawData[17:24])
@@ -111,12 +112,12 @@ class GameStateDecoder:
 class RefereePublisher:
     def __init__(self, nodeName):
         self.robotID = rospy.get_param('robot_id', 0)
-        rospy.init_node(f"nodeName_{self.robotID+1}", anonymous=True)
+        rospy.init_node(f"nodeName_{self.robotID}", anonymous=True)
         #robot id starts from 0, but GameController starts from 1
-        self._pub = rospy.Publisher(f'robotis_{self.robotID+1}/refereeData', referee, queue_size=1)
+        self._pub = rospy.Publisher(f'robotis_{self.robotID}/refereeData', referee, queue_size=1)
         self.refereeMsg = referee()
     def publish(self,msg):
-        rospy.loginfo(f"publishing from robot_{self.robotID+1} which has ID={self.robotID}")
+        rospy.loginfo(f"publishing from robot_{self.robotID} which has ID={self.robotID}")
         self._pub.publish(msg)
         
 
@@ -125,8 +126,14 @@ class UDPCommunication:
     # Datos de cada jugador
     header = b'RGrt'    # Header RGrt
     version = 2         # Versión de la estructura de datos
-    team = 14            # Número de equipo
-    stdMsg = 2      # Mensaje (0: GAMECONTROLLER_RETURN_MSG_ALIVE, 1: GAMECONTROLLER_RETURN_MSG_MAN_PENALISE, 2: GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE)
+    team = 16           # Número de equipo
+    stdMsg = 2     
+#define GAMECONTROLLER_RETURN_MSG_MAN_PENALISE                    0
+#define GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE                  1
+#define GAMECONTROLLER_RETURN_MSG_ALIVE                           2
+#define GAMECONTROLLER_RETURN_MSG_GOALKEEPER                      3
+#define GAMECONTROLLER_RETURN_MSG_GAME_INTERRUPTION_READY         4
+
 
     def __init__(self, publisherIp, refereeIp, listeningPort, sendingPort):
         self._ip = publisherIp
@@ -145,7 +152,7 @@ class UDPCommunication:
 
 
 def main():
-    udpHandler = UDPCommunication("0.0.0.0","0.0.0.0",3838,3939)#
+    udpHandler = UDPCommunication("0.0.0.0","0.0.0.0",3838,3939) #
     refPublisher = RefereePublisher("refereeNode")
     decoder = GameStateDecoder()
     msg2referee = struct.pack('<4s4B', UDPCommunication.header,UDPCommunication.version,UDPCommunication.team,refPublisher.robotID, UDPCommunication.stdMsg)      # Mensaje (0: GAMECONTROLLER_RETURN_MSG_ALIVE, 1: GAMECONTROLLER_RETURN_MSG_MAN_PENALISE, 2: GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE)
