@@ -86,7 +86,7 @@ class GameStateDecoder:
 
 
         #important information about humanoid state of play
-        if (refereeMsg.state == "quieto") | (refereeMsg.redCards == 1) | (refereeMsg.penaltyTime != 0) | (refereeMsg.secondary_state == "Timeout") | ((refereeMsg.submode == "still") & (refereeMsg.secondary_state !="Normal")):
+        if (refereeMsg.penalty !="none") | (refereeMsg.state == "quieto") | (refereeMsg.redCards == 1) | (refereeMsg.penaltyTime != 0) | (refereeMsg.secondary_state == "Timeout") | ((refereeMsg.submode == "still") & (refereeMsg.secondary_state !="Normal")):
             refereeMsg.robotPlayState = "quieto"
             refereeMsg.robotPlayStateInt = 0
             return refereeMsg
