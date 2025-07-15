@@ -54,7 +54,7 @@ class GameStateDecoder:
         }
     def decode(self,rawData, refereeMsg, robotID):
         #first part
-        playerNumber= playerNumber-1
+        playerNumber= robotID-1
         protocolFirst8Bytes, protocolLast8Bytes, refereeMsg.packet_number, refereeMsg.players_per_team, gameType, state, refereeMsg.first_half, refereeMsg.kick_off_team, s_state, refereeMsg.teamPerformingSubMode, submode = struct.unpack('11B',rawData[4:15])
         #second part
         refereeMsg.drop_in_team, dropInTimeFirst8Bytes, dropInTimeLast8Bytes, timeFirs8Bytes, timeLast8Bytes, secondaryTimeFirst8Bytes, secondaryTimeLast8Bytes = struct.unpack('7B',rawData[17:24])
