@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Custom ip setup
+After=network.target
+[Service]
+ExecStart=/home/blenders/catkin_ws/src/localization_pkg/ip_setup.sh
+Restart=on-failure
+#User=blenders
+WorkingDirectory=/home/blenders
+StandardOutput=journal
+StardardError=journal
+[Install]
+WantedBy=multi-user.target
