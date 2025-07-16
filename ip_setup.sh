@@ -27,7 +27,7 @@ fi
 SSID="FIELD_${LETTER}_5G"
 CON_NAME="$SSID"
 IFACE="wlan0"  # Cambia si tu interfaz es diferente
-STATIC_IP="192.168.13.$OCTET/24"
+STATIC_IP="192.168.13.$OCTET/16"
 GATEWAY="192.168.13.1"
 DNS="8.8.8.8 1.1.1.1"
 
