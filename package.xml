@@ -15,6 +15,7 @@
   <depend>sensor_msgs</depend>
   <depend>rospy</depend>
   <depend>geometry_msgs</depend>
+  <depend>blenders_msgs</depend>
   <depend>humanoid_nav_msgs</depend>
   <depend>std_srvs</depend>
   <depend>message_runtime</depend>

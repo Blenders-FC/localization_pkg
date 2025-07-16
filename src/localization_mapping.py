@@ -1,3 +1,75 @@
+import math
+
+# Constants
+FIELD_WIDTH_CM = 900
+FIELD_HEIGHT_CM = 600
+LEFT_POST_Y_SUP = 170
+RIGHT_POST_Y_SUB = 430
+
+LEFT_POST = (0, RIGHT_POST_Y_SUB)
+RIGHT_POST = (0, LEFT_POST_Y_SUP)
+LEFT_GOALS = [LEFT_POST, RIGHT_POST]
+RIGHT_GOALS = [(FIELD_WIDTH_CM, LEFT_POST_Y_SUP), (FIELD_WIDTH_CM, RIGHT_POST_Y_SUB)]
+
+# Map quadrant to base robot orientation (in degrees)
+base_headings = {
+    1: 180,  # facing left
+    2:   0,  # facing right
+    3:   0,  # facing right
+    4: 180   # facing left
+}
+
+
+class InitialPoseEstimator:
+    def __init__(self, quadrant: int, post: "Calc_Post"):
+        assert quadrant in [1, 2, 3, 4], "Quadrant must be 1–4"
+        self.quadrant = quadrant
+        self.post = post
+
+    def get_robot_position(self):
+        # Decide which post is expected based on quadrant
+        post_index = 0 if self.quadrant % 2 == 1 else 1
+
+        # Choose goal side
+        post_coord = RIGHT_GOALS[post_index] if self.quadrant in [1, 4] else LEFT_GOALS[post_index]
+        print(f"post coord: {post_coord}")
+
+        post_x, post_y = post_coord
+        d = self.post.distance
+        relative_angle_deg = math.degrees(self.post.angle)
+
+        # Robot's base heading in the global frame per quadrant
+        base_heading = base_headings[self.quadrant]
+        global_angle_rad = math.radians(base_heading + relative_angle_deg)
+
+        # Compute robot position
+        robot_x = post_x + d * math.cos(global_angle_rad)
+
+        # Use quadrant to decide Y sign
+        if self.quadrant in [1, 3]:
+            robot_y = post_y + d * math.sin(global_angle_rad)
+        else:  # Quadrant 2 or 4
+            robot_y = post_y - d * math.sin(global_angle_rad)
+
+        return robot_x, robot_y
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import cv2
 import numpy as np
 import math
@@ -160,7 +232,7 @@ class Robot(Localization):
     def __init__(self, field, size):
         post_1 = Calc_Post(distance=319.83, angle=0.5626)
         post_2 = Calc_Post(distance=508.55, angle=1.0098)
-        super().__init__(post_1, post_2, True)  # 90 - robot angle
+        super().__init__(post_1, post_2)  # 90 - robot angle
 
         self.field = field
         self.x_cm = None  # 450  # default in the center
@@ -172,17 +244,28 @@ class Robot(Localization):
         self.y_cm = y_cm
 
     def draw(self, image):
-        """Draws the robot at its current position."""
-        #self.two_goals = False
-        if self.get_position() is None:
-            print("ERRRORR")
-        else:
-            self.x_cm, self.y_cm = self.get_position() # (50, 30)
+        # Robot sees a goalpost at 400 cm, 45° to the left
+        post_measurement = Calc_Post(distance=497, angle=math.radians(20))
+
+        # We're assuming robot is in quadrant 2 (top-left)
+        estimator = InitialPoseEstimator(quadrant=3, post=post_measurement)
+        x_cm, y_cm = estimator.get_robot_position()
+
+        print(f"Estimated position: x = {x_cm:.2f} cm, y = {y_cm:.2f} cm")
+        cv2.circle(image, (round(x_cm), round(y_cm)), self.size, (0, 0, 255), -1)  # Red robot
+
+
+        # """Draws the robot at its current position."""
+        # #self.two_goals = False
+        # if self.get_position() is None:
+        #     print("ERRRORR")
+        # else:
+        #     self.x_cm, self.y_cm = self.get_position() # (50, 30)
         
-        if self.x_cm is not None and self.y_cm is not None:
-            x_px, y_px = cm_to_px(round(self.x_cm), round(self.y_cm))
-            print(f'Position Point: ({x_px}, {y_px})\n')
-            cv2.circle(image, (x_px, y_px), self.size, (0, 0, 255), -1)  # Red robot
+        # if self.x_cm is not None and self.y_cm is not None:
+        #     x_px, y_px = cm_to_px(round(self.x_cm), round(self.y_cm))
+        #     print(f'Position Point: ({x_px}, {y_px})\n')
+        #     cv2.circle(image, (x_px, y_px), self.size, (0, 0, 255), -1)  # Red robot
 
 
 class Calc_Post():

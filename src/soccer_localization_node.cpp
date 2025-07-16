@@ -5,6 +5,7 @@ SoccerLocalizationNode::SoccerLocalizationNode()
   footstep_client_ = nh_.serviceClient<humanoid_nav_msgs::PlanFootsteps>("/plan_footsteps");
 
   nh_.param<int>("robot_id", robot_id, 0);
+  nh_.param<int>("quadrant", quadrant, 0);
 
   std::string service_name = "robotis_" + std::to_string(robot_id) + "/soccer_localization_node/call_footstep_planner";
 
@@ -13,7 +14,10 @@ SoccerLocalizationNode::SoccerLocalizationNode()
                                           this);
 
   relative_pose_sub_ = nh_.subscribe("/robotis_" + std::to_string(robot_id) + "/relative_pose_steps", 10, &SoccerLocalizationNode::relativePoseCallback, this);
+  goal_params_sub_ = nh_.subscribe("/robotis_" + std::to_string(robot_id) + "/robot_pose/goal_params", 10, &SoccerLocalizationNode::goalParamsCallback, this);
+  
   absolute_pose_pub_ = nh_.advertise<geometry_msgs::PoseArray>("/robotis_" + std::to_string(robot_id) + "/footstep_absolute_poses", 10);
+  init_pose_pub_ = nh_.advertise<blenders_msgs::RobotPose>("/robotis_" + std::to_string(robot_id) + "/robot_pose/init_pose", 0);
 
   ROS_INFO("SoccerLocalizationNode ready. Call %s to trigger footstep planning.", service_name.c_str());
 }
@@ -108,7 +112,6 @@ std::vector<humanoid_nav_msgs::StepTarget> SoccerLocalizationNode::callFootstepP
 
 void SoccerLocalizationNode::relativePoseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 {
-    
     double rel_x = msg->position.x;
     rel_x = rel_x * 2;
     double rel_y = msg->position.y;
@@ -147,6 +150,127 @@ void SoccerLocalizationNode::relativePoseCallback(const geometry_msgs::Pose::Con
 
     ROS_INFO("Published absolute pose: x=%.3f, y=%.3f, theta=%.3f", abs_x, abs_y, abs_theta);
 }
+
+void SoccerLocalizationNode::goalParamsCallback(const blenders_msgs::GoalParams::ConstPtr& msg)
+{
+    double dist = msg->distance;
+    double ang = msg->angle;
+
+    init_robot_pose_msg_.pose = calcInitRobotPosition(dist, ang);
+    init_robot_pose_msg_.valid = true;
+    position_pub_.publish(init_robot_pose_msg_);
+}
+
+geometry_msgs::Pose calcInitRobotPosition(double distance, double angle_rad)
+{
+    geometry_msgs::Pose robot_pose;
+    std::pair<int, int> post_coord;
+
+    // Choose post (left or right)
+    int post_index = (quadrant % 2 == 1) ? 0 : 1;
+
+    // Post coordinates
+    if (quadrant == 1 || quadrant == 4)
+        post_coord = (post_index == 0) ? std::make_pair(POST_X_SUP, POST_Y_SUP)
+                                       : std::make_pair(POST_X_SUP, POST_Y_SUB);
+    else
+        post_coord = (post_index == 0) ? std::make_pair(POST_X_SUB, POST_Y_SUB)
+                                       : std::make_pair(POST_X_SUB, POST_Y_SUP);
+
+    int base_heading_deg = (quadrant == 1 || quadrant == 4) ? 180 : 0;
+    double global_angle_rad = (base_heading_deg + angle_rad * 180.0 / M_PI) * M_PI / 180.0;
+
+    // Compute position
+    robot_pose.position.x = post_coord.first + distance * std::cos(global_angle_rad);
+
+    if (quadrant == 1 || quadrant == 3)
+        robot_pose.position.y = post_coord.second + distance * std::sin(global_angle_rad);
+    else
+        robot_pose.position.y = post_coord.second - distance * std::sin(global_angle_rad);
+
+    robot_pose.position.z = 0.0;
+
+    // Orientation: yaw in quaternion
+    robot_pose.orientation = tf::createQuaternionMsgFromYaw(0);
+
+    return robot_pose;
+}
+
+// geometry_msgs::Point SoccerLocalizationNode::calcInitRobotPosition(double distance, double angle_rad)
+// {
+//     geometry_msgs::Point pos;
+
+//     // Constants
+//     const int POST_X_SUP = 900;
+//     const int POST_Y_SUP = 170;
+//     const int POST_Y_SUB = 430;
+
+//     std::pair<int, int> post_coord;
+
+//     // Which post to use (left or right)
+//     int post_index = (quadrant % 2 == 1) ? 0 : 1;
+
+//     // Determine post position
+//     if (quadrant == 1 || quadrant == 4)
+//         post_coord = (post_index == 0) ? std::make_pair(POST_X_SUP, POST_Y_SUP) :
+//                                          std::make_pair(POST_X_SUP, POST_Y_SUB);
+//     else
+//         post_coord = (post_index == 0) ? std::make_pair(0, POST_Y_SUB) :
+//                                          std::make_pair(0, POST_Y_SUP);
+
+//     // Base heading (deg)
+//     int base_heading_deg = 0;
+//     if (quadrant == 1 || quadrant == 4)
+//         base_heading_deg = 180;
+
+//     // Final global angle in radians
+//     double global_angle = (base_heading_deg + angle_rad * 180.0 / M_PI) * M_PI / 180.0;
+
+//     // X is always added
+//     pos.x = post_coord.first + distance * cos(global_angle);
+
+//     // Y depends on quadrant
+//     if (quadrant == 1 || quadrant == 3)
+//         pos.y = post_coord.second + distance * sin(global_angle);
+//     else
+//         pos.y = post_coord.second - distance * sin(global_angle);
+
+//     pos.z = 0.0;
+//     return pos;
+// }
+
+
+std::pair<double, double> SoccerLocalizationNode::calculateRobotPositionFromPosts(const Post& post1, const Post& post2)
+{
+    double robot_x = NAN;
+    double robot_y = NAN;
+
+    double post_1_x = LEFT_POST_X_SUP;
+    double post_1_y = POST_Y_SUP;
+    double post_2_x = LEFT_POST_X_SUP;
+    double post_2_y = POST_Y_SUB;
+
+    double init_robot_x = std::abs(post1.distance * std::cos(post1.angle)) + post_1_x;
+    double comp_robot_x = std::abs(post2.distance * std::cos(post2.angle)) + post_2_x;
+
+    double init_robot_y, comp_robot_y;
+
+    if (post1.distance > post2.distance) {
+        init_robot_y = std::abs(post1.distance * std::sin(post1.angle) + post_1_y);
+        comp_robot_y = std::abs(post2.distance * std::sin(post2.angle) + post_2_y);
+    } else {
+        init_robot_y = std::abs(post1.distance * std::sin(post1.angle) + post_2_y);
+        comp_robot_y = std::abs(post2.distance * std::sin(post2.angle) + post_1_y);
+    }
+
+    if (std::abs(init_robot_x - comp_robot_x) < 30)
+        robot_x = (init_robot_x + comp_robot_x) / 2.0;
+    if (std::abs(init_robot_y - comp_robot_y) < 30)
+        robot_y = (init_robot_y + comp_robot_y) / 2.0;
+
+    return std::make_pair(robot_x, robot_y);
+}
+
 
 int main(int argc, char** argv)
 {

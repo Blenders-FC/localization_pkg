@@ -3,6 +3,9 @@
   <arg name="robot_id"              default="4"/>
   <param name="robot_id"            value="$(arg robot_id)"/>
 
+  <arg name="quadrant"              default="4"/>
+  <param name="quadrant"            value="$(arg quadrant)"/>
+
   <include file="$(find localization_pkg)/launch/map_loader.launch" />
   <node pkg="footstep_planner" type="footstep_planner_node" name="footstep_planner">
     <rosparam file="$(find localization_pkg)/config/footsteps_blenders.yaml" command="load" />
