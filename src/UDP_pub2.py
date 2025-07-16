@@ -54,7 +54,7 @@ class GameStateDecoder:
         }
     def decode(self,rawData, refereeMsg, robotID):
         #first part
-        playerNumber= playerNumber-1
+        playerNumber= robotID-1
         protocolFirst8Bytes, protocolLast8Bytes, refereeMsg.packet_number, refereeMsg.players_per_team, gameType, state, refereeMsg.first_half, refereeMsg.kick_off_team, s_state, refereeMsg.teamPerformingSubMode, submode = struct.unpack('11B',rawData[4:15])
         #second part
         refereeMsg.drop_in_team, dropInTimeFirst8Bytes, dropInTimeLast8Bytes, timeFirs8Bytes, timeLast8Bytes, secondaryTimeFirst8Bytes, secondaryTimeLast8Bytes = struct.unpack('7B',rawData[17:24])
@@ -152,7 +152,7 @@ class UDPCommunication:
 
 
 def main():
-    udpHandler = UDPCommunication("0.0.0.0","0.0.0.0",3838,3939) #
+    udpHandler = UDPCommunication("192.168.255.255","192.168.0.2",3838,3939) #
     refPublisher = RefereePublisher("refereeNode")
     decoder = GameStateDecoder()
     msg2referee = struct.pack('<4s4B', UDPCommunication.header,UDPCommunication.version,UDPCommunication.team,refPublisher.robotID, UDPCommunication.stdMsg)      # Mensaje (0: GAMECONTROLLER_RETURN_MSG_ALIVE, 1: GAMECONTROLLER_RETURN_MSG_MAN_PENALISE, 2: GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE)
