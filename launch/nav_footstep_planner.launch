@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="robot_id"              default="4"/>
+  <param name="robot_id"            value="$(arg robot_id)"/>
+
+  <include file="$(find localization_pkg)/launch/map_loader.launch" />
+  <node pkg="footstep_planner" type="footstep_planner_node" name="footstep_planner">
+    <rosparam file="$(find localization_pkg)/config/footsteps_blenders.yaml" command="load" />
+    <rosparam file="$(find localization_pkg)/config/planning_params_blenders.yaml" command="load" />
+    <rosparam file="$(find localization_pkg)/config/planning_params.yaml" command="load" />
+    <remap from="map" to="projected_map" />
+  </node>
+  
+  <node pkg="localization_pkg" type="soccer_localization_node" name="soccer_localization_node" output="screen">
+    <param name="robot_id"               value="1"/>
+  </node>
+
+</launch>
