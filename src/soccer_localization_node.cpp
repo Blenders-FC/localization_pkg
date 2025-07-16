@@ -153,15 +153,15 @@ void SoccerLocalizationNode::relativePoseCallback(const geometry_msgs::Pose::Con
 
 void SoccerLocalizationNode::goalParamsCallback(const blenders_msgs::GoalParams::ConstPtr& msg)
 {
-    double dist = msg->distance;
-    double ang = msg->angle;
+    double dist = msg->distance.data;
+    double ang = msg->angle.data;
 
     init_robot_pose_msg_.pose = calcInitRobotPosition(dist, ang);
     init_robot_pose_msg_.valid = true;
-    position_pub_.publish(init_robot_pose_msg_);
+    init_pose_pub_.publish(init_robot_pose_msg_);
 }
 
-geometry_msgs::Pose calcInitRobotPosition(double distance, double angle_rad)
+geometry_msgs::Pose SoccerLocalizationNode::calcInitRobotPosition(double distance, double angle_rad)
 {
     geometry_msgs::Pose robot_pose;
     std::pair<int, int> post_coord;
@@ -245,9 +245,9 @@ std::pair<double, double> SoccerLocalizationNode::calculateRobotPositionFromPost
     double robot_x = NAN;
     double robot_y = NAN;
 
-    double post_1_x = LEFT_POST_X_SUP;
+    double post_1_x = POST_X_SUP;
     double post_1_y = POST_Y_SUP;
-    double post_2_x = LEFT_POST_X_SUP;
+    double post_2_x = POST_X_SUP;
     double post_2_y = POST_Y_SUB;
 
     double init_robot_x = std::abs(post1.distance * std::cos(post1.angle)) + post_1_x;

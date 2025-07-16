@@ -32,6 +32,7 @@ private:
   ros::Subscriber relative_pose_sub_;
   ros::Subscriber goal_params_sub_;
   ros::Publisher absolute_pose_pub_;
+  ros::Publisher init_pose_pub_;
 
   blenders_msgs::RobotPose init_robot_pose_msg_;
 
@@ -45,7 +46,7 @@ private:
   void goalParamsCallback(const blenders_msgs::GoalParams::ConstPtr& msg);
 
   std::pair<double, double> calculateRobotPositionFromPosts(const Post& post1, const Post& post2);
-  geometry_msgs::Pose calcInitRobotPosition(int quadrant, double distance, double angle_rad);
+  geometry_msgs::Pose calcInitRobotPosition(double distance, double angle_rad);
 
   int robot_id;
   int quadrant;

@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="robot_id"              default="4"/>
+  <arg name="robot_id"              default="2"/>
   <param name="robot_id"            value="$(arg robot_id)"/>
 
-  <arg name="quadrant"              default="4"/>
+  <arg name="quadrant"              default="3"/>
   <param name="quadrant"            value="$(arg quadrant)"/>
 
   <include file="$(find localization_pkg)/launch/map_loader.launch" />
