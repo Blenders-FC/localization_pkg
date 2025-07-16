@@ -15,7 +15,8 @@
   </node>
   
   <node pkg="localization_pkg" type="soccer_localization_node" name="soccer_localization_node" output="screen">
-    <param name="robot_id"               value="1"/>
+    <param name="robot_id"               value="$(arg robot_id)"/>
+    <param name="quadrant"               value="$(arg quadrant)"/>
   </node>
 
 </launch>
