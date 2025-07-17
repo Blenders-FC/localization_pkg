@@ -59,13 +59,25 @@ class GameStateDecoder:
         #second part
         refereeMsg.drop_in_team, dropInTimeFirst8Bytes, dropInTimeLast8Bytes, timeFirs8Bytes, timeLast8Bytes, secondaryTimeFirst8Bytes, secondaryTimeLast8Bytes = struct.unpack('7B',rawData[17:24])
         
+        TeamNumberOnLeft = rawData[24]
 
-        if(refereeMsg.first_half==1): #los bytes cambian en el cambio de cancha local es 1, vistante 0
+
+        #blenders is local and first half
+        if(refereeMsg.first_half==1 and TeamNumberOnLeft == 13): #los bytes cambian en el cambio de cancha local es 1, vistante 0
             teaminfo = rawData[24:29]
             playerinfo = rawData[290+playerNumber*6:296+playerNumber*6]
-        else:
+        #visit
+        elif(refereeMsg.first_half==0 and TeamNumberOnLeft == 13):
+            teaminfo = rawData[24:29]
+            playerinfo = rawData[290+playerNumber*6:296+playerNumber*6]
+        #visitnte
+        elif(refereeMsg.first_half==1 and TeamNumberOnLeft != 13):
             teaminfo = rawData[356:361]
-            playerinfo = rawData[622+playerNumber*6:628+playerNumber*6]
+            playerinfo = rawData[622+playerNumber*6:628+playerNumber*6]        
+        #local
+        elif(refereeMsg.first_half==0 and TeamNumberOnLeft != 13):
+            teaminfo = rawData[356:361]
+            playerinfo = rawData[622+playerNumber*6:628+playerNumber*6]     
 
         #team info 356 to 361 for b team
         refereeMsg.teamNumber, refereeMsg.teamColor, refereeMsg.score, refereeMsg.penaltyShotCounter, refereeMsg.coachSequence = struct.unpack('5B',teaminfo)
