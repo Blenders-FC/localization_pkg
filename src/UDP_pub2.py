@@ -52,7 +52,7 @@ class GameStateDecoder:
         8: "Goal Kick",
         9: "Throw-In"
         }
-    def decode(self,rawData, refereeMsg, robotID):
+    def decode(self,rawData, refereeMsg, robotID, teamNumber):
         #first part
         playerNumber= robotID-1
         protocolFirst8Bytes, protocolLast8Bytes, refereeMsg.packet_number, refereeMsg.players_per_team, gameType, state, refereeMsg.first_half, refereeMsg.kick_off_team, s_state, refereeMsg.teamPerformingSubMode, submode = struct.unpack('11B',rawData[4:15])
@@ -63,19 +63,19 @@ class GameStateDecoder:
 
 
         #blenders is local and first half
-        if(refereeMsg.first_half==1 and TeamNumberOnLeft == 13): #los bytes cambian en el cambio de cancha local es 1, vistante 0
+        if(refereeMsg.first_half==1 and TeamNumberOnLeft == teamNumber): #los bytes cambian en el cambio de cancha local es 1, vistante 0
             teaminfo = rawData[24:29]
             playerinfo = rawData[290+playerNumber*6:296+playerNumber*6]
         #visit
-        elif(refereeMsg.first_half==0 and TeamNumberOnLeft == 13):
+        elif(refereeMsg.first_half==0 and TeamNumberOnLeft == teamNumber):
             teaminfo = rawData[24:29]
             playerinfo = rawData[290+playerNumber*6:296+playerNumber*6]
         #visitnte
-        elif(refereeMsg.first_half==1 and TeamNumberOnLeft != 13):
+        elif(refereeMsg.first_half==1 and TeamNumberOnLeft != teamNumber):
             teaminfo = rawData[356:361]
             playerinfo = rawData[622+playerNumber*6:628+playerNumber*6]        
         #local
-        elif(refereeMsg.first_half==0 and TeamNumberOnLeft != 13):
+        elif(refereeMsg.first_half==0 and TeamNumberOnLeft != teamNumber):
             teaminfo = rawData[356:361]
             playerinfo = rawData[622+playerNumber*6:628+playerNumber*6]     
 
@@ -134,19 +134,6 @@ class RefereePublisher:
         
 
 class UDPCommunication:
-
-    # Datos de cada jugador
-    header = b'RGrt'    # Header RGrt
-    version = 2         # Versión de la estructura de datos
-    team = 13           # Número de equipo
-    stdMsg = 2     
-#define GAMECONTROLLER_RETURN_MSG_MAN_PENALISE                    0
-#define GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE                  1
-#define GAMECONTROLLER_RETURN_MSG_ALIVE                           2
-#define GAMECONTROLLER_RETURN_MSG_GOALKEEPER                      3
-#define GAMECONTROLLER_RETURN_MSG_GAME_INTERRUPTION_READY         4
-
-
     def __init__(self, publisherIp, refereeIp, listeningPort, sendingPort):
         self._ip = publisherIp
         self._refereeIp = refereeIp
@@ -164,13 +151,23 @@ class UDPCommunication:
 
 
 def main():
+        # Datos de cada jugador
+    header = b'RGrt'    # Header RGrt
+    version = 2         # Versión de la estructura de datos
+    teamNumber = 16           # Número de equipo
+    stdMsg = 2     
+#define GAMECONTROLLER_RETURN_MSG_MAN_PENALISE                    0
+#define GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE                  1
+#define GAMECONTROLLER_RETURN_MSG_ALIVE                           2
+#define GAMECONTROLLER_RETURN_MSG_GOALKEEPER                      3
+#define GAMECONTROLLER_RETURN_MSG_GAME_INTERRUPTION_READY         4
     udpHandler = UDPCommunication("192.168.255.255","192.168.0.2",3838,3939) #
     refPublisher = RefereePublisher("refereeNode")
     decoder = GameStateDecoder()
-    msg2referee = struct.pack('<4s4B', UDPCommunication.header,UDPCommunication.version,UDPCommunication.team,refPublisher.robotID, UDPCommunication.stdMsg)      # Mensaje (0: GAMECONTROLLER_RETURN_MSG_ALIVE, 1: GAMECONTROLLER_RETURN_MSG_MAN_PENALISE, 2: GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE)
+    msg2referee = struct.pack('<4s4B', header,version,teamNumber,refPublisher.robotID, stdMsg)      # Mensaje (0: GAMECONTROLLER_RETURN_MSG_ALIVE, 1: GAMECONTROLLER_RETURN_MSG_MAN_PENALISE, 2: GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE)
     while not rospy.is_shutdown():
         rawData =udpHandler.listenReferee()
-        formattedMsg = decoder.decode(rawData,refPublisher.refereeMsg,refPublisher.robotID)
+        formattedMsg = decoder.decode(rawData,refPublisher.refereeMsg,refPublisher.robotID, teamNumber)
         udpHandler.talk2Referee(msg2referee)
         refPublisher.publish(formattedMsg)
 if __name__ == '__main__':
