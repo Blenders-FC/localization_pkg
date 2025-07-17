@@ -126,7 +126,7 @@ class UDPCommunication:
     # Datos de cada jugador
     header = b'RGrt'    # Header RGrt
     version = 2         # Versión de la estructura de datos
-    team = 16           # Número de equipo
+    team = 13           # Número de equipo
     stdMsg = 2     
 #define GAMECONTROLLER_RETURN_MSG_MAN_PENALISE                    0
 #define GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE                  1
