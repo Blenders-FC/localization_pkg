@@ -46,6 +46,7 @@ private:
   void goalParamsCallback(const blenders_msgs::GoalParams::ConstPtr& msg);
 
   std::pair<double, double> calculateRobotPositionFromPosts(const Post& post1, const Post& post2);
+  geometry_msgs::Pose calcInitPositionFromAngles(double robot_angle);
   geometry_msgs::Pose calcInitRobotPosition(double distance, double angle_rad);
 
   int robot_id;
@@ -58,12 +59,14 @@ private:
   double abs_x_ = 0; //initial_x;
   double abs_y_ = 0; //initial_y;
   double abs_theta_ = 0; //initial_theta;
+  double complementary_angle;
 
   // Constants
   const int POST_X_SUP = 900;
   const int POST_X_SUB = 0;
   const int POST_Y_SUP = 170;
   const int POST_Y_SUB = 430;
+  const int FIELD_HEIGHT = 600;
 };
 
 #endif // SOCCER_LOCALIZATION_NODE_H

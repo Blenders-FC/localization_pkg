@@ -156,7 +156,7 @@ void SoccerLocalizationNode::goalParamsCallback(const blenders_msgs::GoalParams:
     double dist = msg->distance.data;
     double ang = msg->angle.data;
 
-    init_robot_pose_msg_.pose = calcInitRobotPosition(dist, ang);
+    init_robot_pose_msg_.pose = calcInitPositionFromAngles(ang);
     init_robot_pose_msg_.valid = true;
     init_pose_pub_.publish(init_robot_pose_msg_);
 }
@@ -192,6 +192,30 @@ geometry_msgs::Pose SoccerLocalizationNode::calcInitRobotPosition(double distanc
 
     // Orientation: yaw in quaternion
     robot_pose.orientation = tf::createQuaternionMsgFromYaw(0);
+
+    return robot_pose;
+}
+
+geometry_msgs::Pose SoccerLocalizationNode::calcInitPositionFromAngles(double robot_angle)
+{
+    geometry_msgs::Pose robot_pose;
+
+    complementary_angle = 1.5708 - abs(robot_angle);  // 90° - robot_ang
+    robot_pose.position.x = POST_Y_SUP / std::tan(complementary_angle);  // 170cm/tan(comp_ang)
+
+    if (quadrant < 3)
+    {
+      robot_pose.position.y = POST_X_SUB;  // 0 
+    }
+    else
+    {
+      robot_pose.position.y = FIELD_HEIGHT;  // 600
+    }
+
+    robot_pose.position.z = 0.0;
+
+    // Orientation: yaw in quaternion
+    robot_pose.orientation = tf::createQuaternionMsgFromYaw(90);
 
     return robot_pose;
 }
