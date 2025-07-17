@@ -126,7 +126,7 @@ class RefereePublisher:
         self.robotID = rospy.get_param('robot_id', 0)
         rospy.init_node(f"nodeName_{self.robotID}", anonymous=True)
         #robot id starts from 0, but GameController starts from 1
-        self._pub = rospy.Publisher(f'robotis_{self.robotID}/refereeData', referee, queue_size=1)
+        self._pub = rospy.Publisher(f'robotis_{self.robotID}/referee_data', referee, queue_size=1)
         self.refereeMsg = referee()
     def publish(self,msg):
         rospy.loginfo(f"publishing from robot_{self.robotID} which has ID={self.robotID}")
@@ -154,7 +154,7 @@ def main():
         # Datos de cada jugador
     header = b'RGrt'    # Header RGrt
     version = 2         # Versión de la estructura de datos
-    teamNumber = 16           # Número de equipo
+    teamNumber = 13           # Número de equipo
     stdMsg = 2     
 #define GAMECONTROLLER_RETURN_MSG_MAN_PENALISE                    0
 #define GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE                  1
