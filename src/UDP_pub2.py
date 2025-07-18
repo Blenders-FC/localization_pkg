@@ -26,6 +26,11 @@ class GameStateDecoder:
         2: "quieto",
         3: "Playing",
         4: "quieto"
+        #define STATE_INITIAL               0
+        #define STATE_READY                 1
+        #define STATE_SET                   2
+        #define STATE_PLAYING               3
+        #define STATE_FINISHED              4
         }    
         self._submode = {
             0: "still",
@@ -99,7 +104,8 @@ class GameStateDecoder:
 
 
         #important information about humanoid state of play
-        if (refereeMsg.penalty !="none") | (refereeMsg.state == "quieto") | (refereeMsg.redCards == 1) | (refereeMsg.penaltyTime != 0) | (refereeMsg.secondary_state == "Timeout") | ((refereeMsg.submode == "still") & (refereeMsg.secondary_state !="Normal")):
+        
+        if (refereeMsg.penalty !='none') | (refereeMsg.state == "quieto") | (refereeMsg.redCards >= 1) | (refereeMsg.penaltyTime != 0) | (refereeMsg.secondary_state == "Timeout") | ((refereeMsg.submode == "still")  & (refereeMsg.secondary_state !="Normal") & (refereeMsg.secondary_state !="Penalty Shoot") & (refereeMsg.secondary_state !="Normal") & (refereeMsg.secondary_state !="Overtime")):
             refereeMsg.robotPlayState = "quieto"
             refereeMsg.robotPlayStateInt = 0
             return refereeMsg
@@ -107,15 +113,15 @@ class GameStateDecoder:
             refereeMsg.robotPlayState = "acomodate"
             refereeMsg.robotPlayStateInt = 1
             return refereeMsg
-        if (refereeMsg.state == "Playing") & (refereeMsg.secondary_state == "Normal") & (refereeMsg.redCards == 0) & (refereeMsg.penaltyTime == 0):
+        if (refereeMsg.state == "Playing"):
             refereeMsg.robotPlayState = "playing"
             refereeMsg.robotPlayStateInt = 2
             return refereeMsg
-        if (refereeMsg.secondary_state != "Normal") & (refereeMsg.teamPerformingSubMode == 10) & (refereeMsg.submode != "still"):
+        if (refereeMsg.secondary_state != "Normal") & (refereeMsg.teamPerformingSubMode == teamNumber) & (refereeMsg.submode != "still"):
             refereeMsg.robotPlayState = "acercate"
             refereeMsg.robotPlayStateInt = 3
             return refereeMsg
-        if (refereeMsg.secondary_state != "Normal") & (refereeMsg.teamPerformingSubMode != 10) & (refereeMsg.submode != "still"):
+        if (refereeMsg.secondary_state != "Normal") & (refereeMsg.teamPerformingSubMode != teamNumber) & (refereeMsg.submode != "still"):
             refereeMsg.robotPlayState = "alejate"
             refereeMsg.robotPlayStateInt = 4
             return refereeMsg
