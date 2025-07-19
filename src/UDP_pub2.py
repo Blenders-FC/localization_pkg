@@ -176,6 +176,7 @@ def main():
     version = 2         # Versión de la estructura de datos
     teamNumber = 13           # Número de equipo
     stdMsg = 2     
+    already_published = False
 #define GAMECONTROLLER_RETURN_MSG_MAN_PENALISE                    0
 #define GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE                  1
 #define GAMECONTROLLER_RETURN_MSG_ALIVE                           2
@@ -189,6 +190,15 @@ def main():
         rawData =udpHandler.listenReferee()
         formattedMsg = decoder.decode(rawData,refPublisher.refereeMsg,refPublisher.robotID, teamNumber)
         udpHandler.talk2Referee(msg2referee)
+        if formattedMsg.secondary_time == 0 or formattedMsg.secondary_time == 45:
+            already_published = False
+        #     print("AQUI ESTOYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY")
+        # print(f"formattedMsg.robotPlayStateInt {formattedMsg.robotPlayStateInt},     already_published: {already_published}")
+        if formattedMsg.robotPlayStateInt == 1 and already_published:
+            continue
         refPublisher.publish(formattedMsg)
+        already_published = True 
+
+
 if __name__ == '__main__':
     main()
