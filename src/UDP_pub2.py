@@ -57,6 +57,9 @@ class GameStateDecoder:
         8: "Goal Kick",
         9: "Throw-In"
         }
+
+        self._past_penalty_state_ = ""
+
     def decode(self,rawData, refereeMsg, robotID, teamNumber):
         #first part
         playerNumber= robotID-1
@@ -104,26 +107,37 @@ class GameStateDecoder:
 
 
         #important information about humanoid state of play
+
         
+        
+        if ((refereeMsg.state == "Ready") | (refereeMsg.penalty == self._penalty[0] and self._past_penalty_state_ != self._penalty[0])):
+            refereeMsg.robotPlayState = "acomodate"
+            refereeMsg.robotPlayStateInt = 1
+            self._past_penalty_state_ = refereeMsg.penalty
+            return refereeMsg
         if (refereeMsg.penalty !='none') | (refereeMsg.state == "quieto") | (refereeMsg.redCards >= 1) | (refereeMsg.penaltyTime != 0) | (refereeMsg.secondary_state == "Timeout") | ((refereeMsg.submode == "still")  & (refereeMsg.secondary_state !="Normal") & (refereeMsg.secondary_state !="Penalty Shoot") & (refereeMsg.secondary_state !="Normal") & (refereeMsg.secondary_state !="Overtime")):
             refereeMsg.robotPlayState = "quieto"
             refereeMsg.robotPlayStateInt = 0
+            self._past_penalty_state_ = refereeMsg.penalty
             return refereeMsg
-        if (refereeMsg.state == "Ready"):
-            refereeMsg.robotPlayState = "acomodate"
-            refereeMsg.robotPlayStateInt = 1
-            return refereeMsg
+        # if (refereeMsg.state == "Ready"):
+        #     refereeMsg.robotPlayState = "acomodate"
+        #     refereeMsg.robotPlayStateInt = 1
+        #     return refereeMsg
         if (refereeMsg.state == "Playing"):
             refereeMsg.robotPlayState = "playing"
             refereeMsg.robotPlayStateInt = 2
+            self._past_penalty_state_ = refereeMsg.penalty
             return refereeMsg
         if (refereeMsg.secondary_state != "Normal") & (refereeMsg.teamPerformingSubMode == teamNumber) & (refereeMsg.submode != "still"):
             refereeMsg.robotPlayState = "acercate"
             refereeMsg.robotPlayStateInt = 3
+            self._past_penalty_state_ = refereeMsg.penalty
             return refereeMsg
         if (refereeMsg.secondary_state != "Normal") & (refereeMsg.teamPerformingSubMode != teamNumber) & (refereeMsg.submode != "still"):
             refereeMsg.robotPlayState = "alejate"
             refereeMsg.robotPlayStateInt = 4
+            self._past_penalty_state_ = refereeMsg.penalty
             return refereeMsg
     
 
@@ -135,7 +149,7 @@ class RefereePublisher:
         self._pub = rospy.Publisher(f'robotis_{self.robotID}/referee_data', referee, queue_size=1)
         self.refereeMsg = referee()
     def publish(self,msg):
-        rospy.loginfo(f"publishing from robot_{self.robotID} which has ID={self.robotID}")
+        #rospy.loginfo(f"publishing from robot_{self.robotID} which has ID={self.robotID}")
         self._pub.publish(msg)
         
 
@@ -167,7 +181,7 @@ def main():
 #define GAMECONTROLLER_RETURN_MSG_ALIVE                           2
 #define GAMECONTROLLER_RETURN_MSG_GOALKEEPER                      3
 #define GAMECONTROLLER_RETURN_MSG_GAME_INTERRUPTION_READY         4
-    udpHandler = UDPCommunication("192.168.255.255","192.168.0.2",3838,3939) #
+    udpHandler = UDPCommunication("0.0.0.0","0.0.0.0",3838,3939)  # ("192.168.255.255","192.168.0.2",3838,3939) #
     refPublisher = RefereePublisher("refereeNode")
     decoder = GameStateDecoder()
     msg2referee = struct.pack('<4s4B', header,version,teamNumber,refPublisher.robotID, stdMsg)      # Mensaje (0: GAMECONTROLLER_RETURN_MSG_ALIVE, 1: GAMECONTROLLER_RETURN_MSG_MAN_PENALISE, 2: GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE)
