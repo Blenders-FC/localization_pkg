@@ -182,7 +182,7 @@ def main():
 #define GAMECONTROLLER_RETURN_MSG_ALIVE                           2
 #define GAMECONTROLLER_RETURN_MSG_GOALKEEPER                      3
 #define GAMECONTROLLER_RETURN_MSG_GAME_INTERRUPTION_READY         4
-    udpHandler = UDPCommunication("0.0.0.0","0.0.0.0",3838,3939)  # ("192.168.255.255","192.168.0.2",3838,3939) #
+    udpHandler = UDPCommunication("192.168.0.255","192.168.0.162",3838,3939)  # ("192.168.255.255","192.168.0.2",3838,3939) #
     refPublisher = RefereePublisher("refereeNode")
     decoder = GameStateDecoder()
     msg2referee = struct.pack('<4s4B', header,version,teamNumber,refPublisher.robotID, stdMsg)      # Mensaje (0: GAMECONTROLLER_RETURN_MSG_ALIVE, 1: GAMECONTROLLER_RETURN_MSG_MAN_PENALISE, 2: GAMECONTROLLER_RETURN_MSG_MAN_UNPENALISE)

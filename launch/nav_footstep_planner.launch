@@ -3,8 +3,8 @@
   <arg name="robot_id"              default="$(env ROBOT_ID)"      doc="robot id [1, 2, 3, 4]"/>
   <param name="robot_id"            value="$(arg robot_id)"/>
 
-  <!-- <arg name="quadrant"              default="3"/> -->
-  <!-- <param name="quadrant"            value="$(arg quadrant)"/> -->
+   <arg name="quadrant"              default="3"/> 
+   <param name="quadrant"            value="$(arg quadrant)"/> 
 
   <include file="$(find localization_pkg)/launch/map_loader.launch" />
   <node pkg="footstep_planner" type="footstep_planner_node" name="footstep_planner">
@@ -16,7 +16,7 @@
   
   <node pkg="localization_pkg" type="soccer_localization_node" name="soccer_localization_node" output="screen">
     <param name="robot_id"               value="$(arg robot_id)"/>
-    <!-- <param name="quadrant"               value="$(arg quadrant)"/> -->
+     <param name="quadrant"               value="$(arg quadrant)"/> 
   </node>
 
 
