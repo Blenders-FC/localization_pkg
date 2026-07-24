@@ -6,7 +6,7 @@ from rclpy.node import Node
 
 import threading
 
-from blenders_msgs.msg import Referee
+from localization_pkg.msg  import Referee
 import socket
 import struct
 

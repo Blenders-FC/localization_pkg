@@ -1,22 +1,42 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
+
   <name>localization_pkg</name>
   <version>0.0.0</version>
   <description>The localization_pkg package</description>
 
   <maintainer email="pedrodeniz11@gmail.com">Pedro Deniz</maintainer>
-  <license>BSD</license>
-
   <author email="robotec.gdl@gmail.com">Blenders team</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
+  <license>BSD</license>
+
+  <!-- Build tool -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Build dependencies -->
+  <build_depend>rosidl_default_generators</build_depend>
+
+  <!-- Dependencies -->
+  <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>rospy</depend>
   <depend>geometry_msgs</depend>
-  <depend>humanoid_nav_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>message_runtime</depend>
+  <depend>humanoid_nav_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+
+  <!-- Only if your .srv or .msg uses builtin_interfaces -->
+  <depend>builtin_interfaces</depend>
+
+  <!-- Runtime for generated interfaces -->
+  <exec_depend>rosidl_default_runtime</exec_depend>
+
+  <!-- Required when generating messages/services -->
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 
 </package>
